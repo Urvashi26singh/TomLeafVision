@@ -9,6 +9,7 @@ import base64
 import pickle
 import traceback
 import time
+import sys 
 
 # Import disease info
 from model.disease_info import get_disease_info
@@ -17,7 +18,10 @@ app = Flask(__name__)
 
 # ---------------- CONFIG ---------------- #
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+if os.environ.get('RENDER'):
+    app.config['UPLOAD_FOLDER'] = '/tmp/TomLeafVision-3_uploads'
+else:
+    app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
 
 # Create upload folder if it doesn't exist
@@ -43,8 +47,14 @@ def load_model_and_classes():
 
     try:
         # Try to load model
+        physical_devices = tf.config.list_physical_devices('GPU')
+        if not physical_devices:
+            tf.config.threading.set_intra_op_parallelism_threads(1)
+            tf.config.threading.set_inter_op_parallelism_threads(1)
+            
         if os.path.exists(MODEL_PATH):
             print(f"📂 Found model at: {MODEL_PATH}")
+            print(f"Model file size: {os.path.getsize(MODEL_PATH) / (1024*1024):.2F} MB")
             try:
                 model = tf.keras.models.load_model(MODEL_PATH)
                 print("✅ Model loaded successfully!")
@@ -55,11 +65,10 @@ def load_model_and_classes():
                 print(f"✅ Model test prediction shape: {test_pred.shape}")
             except Exception as e:
                 print(f"❌ Error loading model: {e}")
-                traceback.print_exc()
+                
                 model = None
         else:
             print(f"⚠️ Model file not found at: {MODEL_PATH}")
-            print("⚠️ Using mock prediction until model is trained.")
             model = None
 
         # Try to load class indices
@@ -538,4 +547,5 @@ if __name__ == "__main__":
     print("="*60 + "\n")
 
     # Run the app
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT",10000)), debug=debug_mode)
