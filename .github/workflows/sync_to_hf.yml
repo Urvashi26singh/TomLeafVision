@@ -4,7 +4,7 @@ on:
     branches: [main]
 
 env:
-  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  HF_TOKEN: ${{ secrets.GitHub-Sync-TomLeaf }}
   
   # This allows you to run the sync manually from the Actions tab
   workflow_dispatch:
