@@ -538,4 +538,4 @@ if __name__ == "__main__":
     print("="*60 + "\n")
 
     # Run the app
-    app.run(host="0.0.0.0", port=5000, debug=True)  # try 5000 or 8080
+    app.run(host="0.0.0.0", port=7860, debug=True)  
